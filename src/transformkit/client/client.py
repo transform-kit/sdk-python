@@ -74,8 +74,6 @@ def _build_multipart(file_bytes: bytes, file_name: str, pipeline: Pipeline) -> t
         d: dict[str, Any] = {"value": f.value, "editable": f.editable}
         if getattr(f, "options", None) is not None:
             d["options"] = f.options
-        if getattr(f, "label", None) is not None:
-            d["label"] = f.label
         return d
 
     pipeline_json = json.dumps({

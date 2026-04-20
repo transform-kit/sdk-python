@@ -26,7 +26,7 @@ async def run_pipeline(
     """
     if not any(n.type == "pipeline.input" for n in pipeline.nodes):
         raise RuntimeError("Pipeline must have at least one Input node.")
-    if not any(n.type == "output.console" for n in pipeline.nodes):
+    if not any(n.type == "pipeline.output" for n in pipeline.nodes):
         raise RuntimeError("Pipeline must have at least one Output node.")
 
     node_dicts = [{"id": n.id, "type": n.type} for n in pipeline.nodes]

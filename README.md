@@ -31,7 +31,7 @@ pipeline = Pipeline(
         NodeInstance(id="convert", type="image.convert", config={
             "format": ConfigField(value="png", editable=False),
         }),
-        NodeInstance(id="out", type="output.console"),
+        NodeInstance(id="out", type="pipeline.output"),
     ],
     edges=[
         Edge(source="in", target="convert"),
@@ -52,6 +52,24 @@ async def main():
 
 asyncio.run(main())
 ```
+
+## Metadata stripping
+
+Metadata handling is an explicit graph operation, not a flag on the output. Drop
+`image.strip-metadata`, `video.strip-metadata`, or `audio.strip-metadata` into
+the branch that should come out clean; leave other branches untouched to keep
+EXIF/XMP/IPTC/container tags. Each strip node has one boolean config field,
+`enabled` (default `True`) — set to `False` to bypass the node without removing
+it from the graph.
+
+Transports implement the `operation: "strip-metadata"` payload as a lossless
+pass when possible (`ffmpeg -c copy -map_metadata -1` for video/audio;
+chunk-walk or re-emit without tag data for images). **ICC color profiles are
+always preserved** to avoid unintended color shifts.
+
+Because stripping is a regular node, two `pipeline.output` nodes can share an
+upstream `image.convert` and differ only in whether a `strip-metadata` node
+sits before one of them — no per-output flag propagation, no conflict error.
 
 ## License
 

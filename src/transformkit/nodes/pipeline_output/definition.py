@@ -7,7 +7,6 @@ from copy import copy
 from ...types import (
     ConfigField,
     ExecutionContext,
-    Metadata,
     NodeDefinition,
     NodeResult,
     NodeResultOutput,
@@ -48,4 +47,4 @@ async def _execute(ctx: ExecutionContext, config: dict[str, ConfigField], _trans
     return NodeResultOutput(ctx=ExecutionContext(file=ctx.file, metadata=new_meta))
 
 
-output_console = NodeDefinition(type="output.console", execute=_execute)
+pipeline_output = NodeDefinition(type="pipeline.output", execute=_execute)

@@ -23,7 +23,7 @@ class Metadata:
     """Original queue filename. Preserved through transform nodes for output naming."""
 
     output_file_name: Optional[str] = None
-    """Set by ``output.console`` — final basename including extension."""
+    """Set by ``pipeline.output`` — final basename including extension."""
 
     overwrite_source: Optional[bool] = None
     """When ``True``, hosts may replace the source file in-place."""
@@ -61,12 +61,11 @@ NodeResult = NodeResultContinue | NodeResultSkip | NodeResultOutput
 
 @dataclass
 class ConfigField:
-    """A single config field value with UI metadata."""
+    """A single config field value with optional UI metadata."""
 
     value: Any
     editable: bool
     options: Optional[Sequence[Any]] = None
-    label: Optional[str] = None
 
 
 class Transport(Protocol):
@@ -128,8 +127,12 @@ class Pipeline:
 
 @dataclass
 class NodeCatalogEntry:
-    """One built-in node type with display metadata for editors and pickers."""
+    """One built-in node type with category metadata for pickers.
+
+    Labels are intentionally omitted. Hosts derive display text from
+    ``sdk_type`` through their own i18n layer, keeping the catalog
+    language-agnostic.
+    """
 
     sdk_type: str
-    label: str
     category_id: str

@@ -1,11 +1,11 @@
-"""Utilities for the output.console node."""
+"""Utilities for the pipeline.output node."""
 
 from __future__ import annotations
 
 from ...types import ConfigField
 
 
-DEFAULT_NAME_SUFFIX_FIELD = ConfigField(value="-copy", editable=True, label="Suffix")
+DEFAULT_NAME_SUFFIX_FIELD = ConfigField(value="", editable=True)
 
 
 def stem_and_ext(file_name: str) -> tuple[str, str]:

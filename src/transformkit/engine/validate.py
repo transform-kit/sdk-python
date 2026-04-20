@@ -59,7 +59,7 @@ def validate_pipeline(
     if not any(n.type == "pipeline.input" for n in nodes):
         errors.append(ValidationError(code="NO_INPUT", message="Pipeline must have at least one Input node."))
 
-    if not any(n.type == "output.console" for n in nodes):
+    if not any(n.type == "pipeline.output" for n in nodes):
         errors.append(ValidationError(code="NO_OUTPUT", message="Pipeline must have at least one Output node."))
 
     for edge in edges:
@@ -102,7 +102,7 @@ def validate_pipeline(
 
         for node in nodes:
             is_input = node.type == "pipeline.input"
-            is_output = node.type == "output.console"
+            is_output = node.type == "pipeline.output"
 
             if is_input and node.id not in has_outgoing:
                 errors.append(ValidationError(

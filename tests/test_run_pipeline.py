@@ -30,7 +30,7 @@ def _simple_pipeline(filter_type: str, filter_ext: str, convert_type: str, conve
             NodeInstance(id="input", type="pipeline.input", config={}),
             NodeInstance(id="filter", type=filter_type, config={"extension": ConfigField(value=filter_ext, editable=False)}),
             NodeInstance(id="convert", type=convert_type, config={"format": ConfigField(value=convert_format, editable=False)}),
-            NodeInstance(id="output", type="output.console", config={}),
+            NodeInstance(id="output", type="pipeline.output", config={}),
         ],
         edges=[
             Edge(source="input", target="filter"),
@@ -58,7 +58,7 @@ async def test_works_without_config_on_input_output():
             NodeInstance(id="input", type="pipeline.input"),
             NodeInstance(id="filter", type="image.filter", config={"extension": ConfigField(value="heic", editable=False)}),
             NodeInstance(id="convert", type="image.convert", config={"format": ConfigField(value="png", editable=False)}),
-            NodeInstance(id="output", type="output.console"),
+            NodeInstance(id="output", type="pipeline.output"),
         ],
         edges=[
             Edge(source="input", target="filter"),
@@ -125,11 +125,11 @@ async def test_audio_filter_convert():
 
 
 @pytest.mark.asyncio
-async def test_output_filename_with_suffix():
+async def test_output_filename_with_explicit_suffix():
     pipeline = Pipeline(
         nodes=[
             NodeInstance(id="input", type="pipeline.input", config={}),
-            NodeInstance(id="output", type="output.console", config={"nameSuffix": ConfigField(value="-copy", editable=True)}),
+            NodeInstance(id="output", type="pipeline.output", config={"nameSuffix": ConfigField(value="-copy", editable=True)}),
         ],
         edges=[Edge(source="input", target="output")],
     )
@@ -144,7 +144,7 @@ async def test_overwrite_source_when_suffix_empty():
     pipeline = Pipeline(
         nodes=[
             NodeInstance(id="input", type="pipeline.input", config={}),
-            NodeInstance(id="output", type="output.console", config={"nameSuffix": ConfigField(value="", editable=True)}),
+            NodeInstance(id="output", type="pipeline.output", config={"nameSuffix": ConfigField(value="", editable=True)}),
         ],
         edges=[Edge(source="input", target="output")],
     )
@@ -156,7 +156,7 @@ async def test_overwrite_source_when_suffix_empty():
 
 @pytest.mark.asyncio
 async def test_throws_no_input():
-    pipeline = Pipeline(nodes=[NodeInstance(id="output", type="output.console", config={})], edges=[])
+    pipeline = Pipeline(nodes=[NodeInstance(id="output", type="pipeline.output", config={})], edges=[])
     with pytest.raises(RuntimeError, match="Input node"):
         await run_pipeline(pipeline, registry, transport, _mock_file("png"))
 
@@ -175,7 +175,7 @@ async def test_throws_on_cycle():
             NodeInstance(id="input", type="pipeline.input", config={}),
             NodeInstance(id="a", type="image.filter", config={"extension": ConfigField(value="png", editable=False)}),
             NodeInstance(id="b", type="image.filter", config={"extension": ConfigField(value="png", editable=False)}),
-            NodeInstance(id="output", type="output.console", config={}),
+            NodeInstance(id="output", type="pipeline.output", config={}),
         ],
         edges=[
             Edge(source="input", target="a"),
@@ -186,6 +186,63 @@ async def test_throws_on_cycle():
     )
     with pytest.raises(RuntimeError, match="cycle"):
         await run_pipeline(pipeline, registry, transport, _mock_file("png"))
+
+
+class _RecordingTransport:
+    def __init__(self) -> None:
+        self.payloads: list[dict] = []
+
+    async def convert(self, file: bytes, config: dict) -> bytes:
+        self.payloads.append(dict(config))
+        return bytes(file)
+
+
+@pytest.mark.asyncio
+async def test_image_strip_metadata_enabled_sends_operation_payload():
+    rec = _RecordingTransport()
+    pipeline = Pipeline(
+        nodes=[
+            NodeInstance(id="input", type="pipeline.input", config={}),
+            NodeInstance(id="filter", type="image.filter", config={"extension": ConfigField(value="heic", editable=False)}),
+            NodeInstance(id="convert", type="image.convert", config={"format": ConfigField(value="png", editable=False)}),
+            NodeInstance(id="strip", type="image.strip-metadata", config={"enabled": ConfigField(value=True, editable=True)}),
+            NodeInstance(id="output", type="pipeline.output", config={}),
+        ],
+        edges=[
+            Edge(source="input", target="filter"),
+            Edge(source="filter", target="convert"),
+            Edge(source="convert", target="strip"),
+            Edge(source="strip", target="output"),
+        ],
+    )
+    await run_pipeline(pipeline, registry, rec, _mock_file("heic"))  # type: ignore[arg-type]
+    assert len(rec.payloads) == 2
+    assert "operation" not in rec.payloads[0]
+    assert rec.payloads[1]["operation"] == "strip-metadata"
+    assert rec.payloads[1]["mediaType"] == "image"
+
+
+@pytest.mark.asyncio
+async def test_image_strip_metadata_disabled_is_passthrough():
+    rec = _RecordingTransport()
+    pipeline = Pipeline(
+        nodes=[
+            NodeInstance(id="input", type="pipeline.input", config={}),
+            NodeInstance(id="filter", type="image.filter", config={"extension": ConfigField(value="heic", editable=False)}),
+            NodeInstance(id="convert", type="image.convert", config={"format": ConfigField(value="png", editable=False)}),
+            NodeInstance(id="strip", type="image.strip-metadata", config={"enabled": ConfigField(value=False, editable=True)}),
+            NodeInstance(id="output", type="pipeline.output", config={}),
+        ],
+        edges=[
+            Edge(source="input", target="filter"),
+            Edge(source="filter", target="convert"),
+            Edge(source="convert", target="strip"),
+            Edge(source="strip", target="output"),
+        ],
+    )
+    await run_pipeline(pipeline, registry, rec, _mock_file("heic"))  # type: ignore[arg-type]
+    assert len(rec.payloads) == 1
+    assert "operation" not in rec.payloads[0]
 
 
 @pytest.mark.asyncio
