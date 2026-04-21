@@ -52,6 +52,11 @@ from .pipeline_node_defaults import (
     default_config_for_pipeline_node_type,
     merge_pipeline_node_config,
 )
+from .strip_image_metadata import (
+    StripSupportedExtension,
+    is_strip_supported_extension,
+    strip_image_metadata_lossless,
+)
 from .transport.mock import create_mock_transport
 from .types import (
     ConfigField,
@@ -70,7 +75,7 @@ from .types import (
 )
 from .utils import is_editable, normalize_ext
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 #: Current SDK version — mirrors :data:`__version__` for parity with the TS SDK's
 #: ``SDK_VERSION`` export. Pipeline manifests embed this as their ``version`` so
@@ -130,6 +135,10 @@ __all__ = [
     "create_context",
     # Transport
     "create_mock_transport",
+    # Lossless image metadata stripping (JPEG/PNG)
+    "StripSupportedExtension",
+    "is_strip_supported_extension",
+    "strip_image_metadata_lossless",
     # Client
     "create_client",
     "AddFileInput",
