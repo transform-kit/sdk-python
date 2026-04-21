@@ -129,6 +129,34 @@ async def test_output_filename_with_explicit_suffix():
     pipeline = Pipeline(
         nodes=[
             NodeInstance(id="input", type="pipeline.input", config={}),
+            NodeInstance(id="output", type="pipeline.output", config={"nameSuffix": ConfigField(value="copy", editable=True)}),
+        ],
+        edges=[Edge(source="input", target="output")],
+    )
+    results = await run_pipeline(pipeline, registry, transport, _mock_file("png"))
+    assert len(results) == 1
+    assert results[0].metadata.output_file_name == "test-file-copy.png"
+
+
+@pytest.mark.asyncio
+async def test_injects_joining_dash_for_bare_suffix():
+    pipeline = Pipeline(
+        nodes=[
+            NodeInstance(id="input", type="pipeline.input", config={}),
+            NodeInstance(id="output", type="pipeline.output", config={"nameSuffix": ConfigField(value="test", editable=True)}),
+        ],
+        edges=[Edge(source="input", target="output")],
+    )
+    results = await run_pipeline(pipeline, registry, transport, _mock_file("png"))
+    assert len(results) == 1
+    assert results[0].metadata.output_file_name == "test-file-test.png"
+
+
+@pytest.mark.asyncio
+async def test_strips_leading_dashes_from_suffix():
+    pipeline = Pipeline(
+        nodes=[
+            NodeInstance(id="input", type="pipeline.input", config={}),
             NodeInstance(id="output", type="pipeline.output", config={"nameSuffix": ConfigField(value="-copy", editable=True)}),
         ],
         edges=[Edge(source="input", target="output")],
@@ -136,11 +164,10 @@ async def test_output_filename_with_explicit_suffix():
     results = await run_pipeline(pipeline, registry, transport, _mock_file("png"))
     assert len(results) == 1
     assert results[0].metadata.output_file_name == "test-file-copy.png"
-    assert results[0].metadata.overwrite_source is False
 
 
 @pytest.mark.asyncio
-async def test_overwrite_source_when_suffix_empty():
+async def test_keeps_source_name_when_suffix_empty():
     pipeline = Pipeline(
         nodes=[
             NodeInstance(id="input", type="pipeline.input", config={}),
@@ -151,7 +178,6 @@ async def test_overwrite_source_when_suffix_empty():
     results = await run_pipeline(pipeline, registry, transport, _mock_file("png"))
     assert len(results) == 1
     assert results[0].metadata.output_file_name == "test-file.png"
-    assert results[0].metadata.overwrite_source is True
 
 
 @pytest.mark.asyncio

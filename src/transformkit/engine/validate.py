@@ -40,7 +40,8 @@ def validate_pipeline(
     """Validate a pipeline's structure without executing it.
 
     Checks: duplicate IDs, missing input/output, dangling edges, unknown types,
-    cycles, and disconnected nodes.
+    mixed media types (``image.*`` / ``video.*`` / ``audio.*`` must not appear
+    together), cycles, and disconnected nodes.
     """
     errors: list[ValidationError] = []
     nodes = pipeline.nodes
@@ -82,6 +83,21 @@ def validate_pipeline(
                     message=f'Unknown node type "{node.type}".',
                     node_id=node.id,
                 ))
+
+    media_types: set[str] = set()
+    for node in nodes:
+        if node.type.startswith("image."):
+            media_types.add("image")
+        elif node.type.startswith("video."):
+            media_types.add("video")
+        elif node.type.startswith("audio."):
+            media_types.add("audio")
+    if len(media_types) > 1:
+        joined = " and ".join(sorted(media_types))
+        errors.append(ValidationError(
+            code="MIXED_MEDIA_TYPES",
+            message=f"Pipeline mixes {joined} nodes. Each pipeline must use a single media type.",
+        ))
 
     node_dicts, edge_dicts = _pipeline_to_dicts(pipeline)
     result = kahn_topological_sort(node_dicts, edge_dicts)

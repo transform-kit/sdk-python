@@ -25,9 +25,6 @@ class Metadata:
     output_file_name: Optional[str] = None
     """Set by ``pipeline.output`` — final basename including extension."""
 
-    overwrite_source: Optional[bool] = None
-    """When ``True``, hosts may replace the source file in-place."""
-
 
 @dataclass
 class ExecutionContext:

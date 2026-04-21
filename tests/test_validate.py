@@ -205,6 +205,25 @@ def test_accepts_multi_output_when_one_branch_uses_strip_metadata():
     assert result.valid
 
 
+def test_rejects_mixed_media_types():
+    p = Pipeline(
+        nodes=[
+            NodeInstance(id="input", type="pipeline.input", config={}),
+            NodeInstance(id="img", type="image.convert", config={"format": ConfigField(value="png", editable=False)}),
+            NodeInstance(id="vid", type="video.convert", config={"format": ConfigField(value="mp4", editable=False)}),
+            NodeInstance(id="output", type="pipeline.output", config={}),
+        ],
+        edges=[
+            Edge(source="input", target="img"),
+            Edge(source="img", target="vid"),
+            Edge(source="vid", target="output"),
+        ],
+    )
+    result = validate_pipeline(p, registry)
+    assert not result.valid
+    assert any(e.code == "MIXED_MEDIA_TYPES" for e in result.errors)
+
+
 def test_accepts_minimal_two_node_pipeline():
     p = Pipeline(
         nodes=[

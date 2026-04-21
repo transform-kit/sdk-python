@@ -190,7 +190,6 @@ async def _run_pipeline_via_http(
             extension=extension,
             mime_type=mime_type,
             output_file_name=output_file_name,
-            overwrite_source=False,
         ),
     )]
 
@@ -290,11 +289,17 @@ class _Client:
         if self._state.is_processing:
             return
 
-        pending = [
+        eligible = [
             f for f in self._state.files
-            if f.status in ("unprocessed", "error") and (media_type is None or f.media_type == media_type)
+            if f.status in ("unprocessed", "error")
         ]
-        if not pending:
+        if not eligible:
+            return
+
+        has_pending = media_type is None or any(f.media_type == media_type for f in eligible)
+        if not has_pending:
+            for f in eligible:
+                self._set_file_result(f.id, "skipped")
             return
 
         use_http = self._is_api
@@ -311,7 +316,11 @@ class _Client:
         self._set_state(is_processing=True)
 
         try:
-            for file in pending:
+            for file in eligible:
+                if media_type is not None and file.media_type != media_type:
+                    self._set_file_result(file.id, "skipped")
+                    continue
+
                 self._set_file_result(file.id, "in_progress")
                 await next_tick()
 
@@ -348,7 +357,6 @@ class _Client:
                                     extension=o.metadata.extension,
                                     mime_type=o.metadata.mime_type,
                                     output_file_name=o.metadata.output_file_name,
-                                    overwrite_source=o.metadata.overwrite_source,
                                 ),
                             )
                             for o in outputs

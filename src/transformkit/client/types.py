@@ -24,7 +24,6 @@ class OutputMetadata:
     extension: str
     mime_type: str
     output_file_name: Optional[str] = None
-    overwrite_source: Optional[bool] = None
 
 
 @dataclass
