@@ -2,8 +2,6 @@
 transformkit — Node-based media pipeline engine for Python.
 """
 
-from importlib.metadata import version as _pkg_version
-
 from .client.client import create_client
 from .client.types import (
     AddFileInput,
@@ -49,11 +47,6 @@ from .nodes.pipeline_output.utils import DEFAULT_NAME_SUFFIX_FIELD
 from .nodes.video_strip_metadata.utils import (
     DEFAULT_STRIP_METADATA_ENABLED_FIELD as DEFAULT_VIDEO_STRIP_METADATA_ENABLED_FIELD,
 )
-from .strip_image_metadata import (
-    is_strip_supported_extension,
-    strip_image_metadata_lossless,
-    StripSupportedExtension,
-)
 from .pipeline_node_defaults import (
     NODE_CATALOG,
     default_config_for_pipeline_node_type,
@@ -77,12 +70,12 @@ from .types import (
 )
 from .utils import is_editable, normalize_ext
 
-__version__: str = _pkg_version("transformkit")
+__version__ = "0.2.1"
 
-#: Current SDK version, read from package metadata at runtime.
-#: Pipeline manifests embed this as their ``version`` so consumers can reject or
-#: migrate graphs built against an incompatible engine.
-SDK_VERSION: str = __version__
+#: Current SDK version — mirrors :data:`__version__` for parity with the TS SDK's
+#: ``SDK_VERSION`` export. Pipeline manifests embed this as their ``version`` so
+#: consumers can reject or migrate graphs built against an incompatible engine.
+SDK_VERSION = __version__
 
 __all__ = [
     # Version
@@ -151,10 +144,6 @@ __all__ = [
     "OutputResult",
     "QueuedFile",
     "TransformClient",
-    # Lossless image metadata stripping (JPEG/PNG)
-    "StripSupportedExtension",
-    "is_strip_supported_extension",
-    "strip_image_metadata_lossless",
     # Utils
     "is_editable",
     "normalize_ext",

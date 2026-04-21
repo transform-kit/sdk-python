@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "transformkit"
-version = "0.2.0"
+version = "0.2.1"
 description = "TransformKit SDK — node-based media pipeline engine for Python"
 readme = "README.md"
 license = "MIT"
